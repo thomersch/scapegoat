@@ -2,15 +2,22 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 
 	"github.com/thomersch/grandine/lib/geojson"
+	"github.com/thomersch/grandine/lib/mvt"
 	"github.com/thomersch/grandine/lib/spatial"
 	"github.com/thomersch/grandine/lib/tile"
 )
+
+type featuresInTile struct {
+	Features []spatial.Feature
+	Tile     tile.ID
+}
 
 func main() {
 	source := flag.String("in", "", "file to read from, supported format")
@@ -67,7 +74,10 @@ func main() {
 		}
 	}
 
-	tileCodec := &tile.GeoJSONCodec{}
+	var (
+		ftChan      = make(chan featuresInTile, 1000)
+		encoderDone = startEncoders(ftChan, *target)
+	)
 
 	for x, xl := range ftab[*zoom] {
 		xPath := filepath.Join(zlPath, strconv.Itoa(x))
@@ -88,19 +98,58 @@ func main() {
 					fl = append(fl, spatial.Feature{Props: f.Props, Geometry: g})
 				}
 			}
-			t, err := tileCodec.EncodeTile(map[string][]spatial.Feature{"imagery": fl}, tID)
-			if err != nil {
-				log.Fatal(err)
-			}
 
-			tf, err := os.Create(filepath.Join(xPath, strconv.Itoa(y)+".geojson"))
-			if err != nil {
-				log.Fatalf("could not create tile file: %v", err)
-			}
-			tf.Write(t)
-			tf.Close()
+			ftChan <- featuresInTile{Features: fl, Tile: tID}
 		}
 	}
+	log.Println("Waiting for encoders...")
+	<-encoderDone
+}
+
+func startEncoders(c <-chan featuresInTile, basepath string) <-chan bool {
+	var (
+		gjQueue  = make(chan featuresInTile, 100)
+		mvtQueue = make(chan featuresInTile, 100)
+		done     = make(chan bool)
+	)
+
+	go func() {
+		gfc := &tile.GeoJSONCodec{}
+		worker(gjQueue, gfc, basepath, ".geojson")
+	}()
+
+	go func() {
+		mvtc := &mvt.Codec{}
+		worker(gjQueue, mvtc, basepath, ".mvt")
+	}()
+
+	go func() {
+		for ft := range c {
+			gjQueue <- ft
+			mvtQueue <- ft
+		}
+		done <- true
+	}()
+
+	return done
+}
+
+func worker(c <-chan featuresInTile, enc tile.Codec, basepath string, extension string) {
+	for ftt := range c {
+		t, err := enc.EncodeTile(map[string][]spatial.Feature{"imagery": ftt.Features}, ftt.Tile)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = ioutil.WriteFile(tilepath(ftt.Tile, basepath, extension), t, 0777)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func tilepath(tID tile.ID, basepath string, extension string) string {
+	return filepath.Join(basepath, strconv.Itoa(tID.Z), strconv.Itoa(tID.X), strconv.Itoa(tID.Y)+extension)
 }
 
 func pow(x, y int) int {
