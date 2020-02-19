@@ -217,18 +217,36 @@ func startEncoders(c <-chan featuresInTile, basepath string) <-chan bool {
 				var filteredFts = make([]spatial.Feature, 0, len(i.Features))
 
 				for fn := range i.Features {
+					supported_projection := false
 					projs, ok := i.Features[fn].Props["available_projections"]
 					if !ok {
 						filteredFts = append(filteredFts, i.Features[fn])
 						continue
 					}
+					// look for all possible Web Mercator projections
 					for _, proj := range projs.([]interface{}) {
 						if webmercator[proj.(string)] {
+							i.Features[fn].Props["available_projections"] = proj.(string) // one element
 							delete(i.Features[fn].Props, "available_projections")
-							i.Features[fn].Props["url"] = strings.ReplaceAll(i.Features[fn].Props["url"].(string), "{proj}", proj.(string))
 							filteredFts = append(filteredFts, i.Features[fn])
+							supported_projection = true
 							break
 						}
+					// we didn't find Web Mercator, look for 4326
+					if !supported_projection {
+						for _, proj := range projs.([]interface{}) {
+							if proj.(string) == "EPSG:4326" {
+								i.Features[fn].Props["available_projections"] = proj.(string) // one element
+								delete(i.Features[fn].Props, "available_projections")
+								filteredFts = append(filteredFts, i.Features[fn])
+								supported_projection = true
+								break
+							}
+						}
+					}
+					// neither Web Mercator nor 4326, useless layer, drop
+					if !supported_projection {
+						delete(i.Features[fn])
 					}
 				}
 				innerMvtQueue <- featuresInTile{Features: filteredFts, Tile: i.Tile}
