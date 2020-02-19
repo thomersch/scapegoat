@@ -98,7 +98,7 @@ func fetch(lastModPath string) []byte {
 func generate(src io.Reader, outPath string) error {
 	// tile target
 	zlPath := filepath.Join(outPath, strconv.Itoa(zoom))
-	err := os.MkdirAll(zlPath, 0644)
+	err := os.MkdirAll(zlPath, 0777)
 	if err != nil {
 		return err
 	}
