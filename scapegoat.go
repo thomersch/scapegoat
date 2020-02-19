@@ -31,7 +31,10 @@ var (
 )
 
 func main() {
-	loop()
+	loop() // head start
+	for range time.Tick(15 * time.Minute) {
+		loop()
+	}
 }
 
 func loop() {
@@ -71,6 +74,7 @@ func fetch(lastModPath string) []byte {
 		return nil
 	}
 
+	log.Println("Attempting to fetch new JSON")
 	jr, err := http.Get(josmURL)
 	if err != nil {
 		log.Printf("error while fetching JOSM JSON: %s", err)
@@ -163,12 +167,14 @@ func generate(src io.Reader, outPath string) error {
 	close(ftChan)
 	log.Println("Waiting for encoders...")
 
+	ticker := time.NewTicker(time.Second)
 	go func() {
-		for range time.Tick(time.Second) {
+		for range ticker.C {
 			log.Printf("Left in Queue: %v", len(ftChan))
 		}
 	}()
 	<-encoderDone
+	ticker.Stop()
 	return nil
 }
 
