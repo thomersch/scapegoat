@@ -28,6 +28,16 @@ var (
 	zoom      = 7
 	josmURL   = "https://josm.openstreetmap.de/maps?format=geojson"
 	tilesPath = "tiles/"
+	webmercator := map[string]bool {
+		"EPSG:3857": true,
+		"EPSG:3587": true,
+		"EPSG:3785": true,
+		"EPSG:41001": true,
+		"EPSG:54004": true,
+		"EPSG:102113": true,
+		"EPSG:102100": true,
+		"EPSG:900913": true
+	}
 )
 
 func main() {
@@ -213,9 +223,9 @@ func startEncoders(c <-chan featuresInTile, basepath string) <-chan bool {
 						continue
 					}
 					for _, proj := range projs.([]interface{}) {
-						if proj.(string) == "EPSG:3857" {
+						if webmercator[proj.(string)] {
 							delete(i.Features[fn].Props, "available_projections")
-							i.Features[fn].Props["url"] = strings.ReplaceAll(i.Features[fn].Props["url"].(string), "{proj}", "EPSG:3857")
+							i.Features[fn].Props["url"] = strings.ReplaceAll(i.Features[fn].Props["url"].(string), "{proj}", proj.(string))
 							filteredFts = append(filteredFts, i.Features[fn])
 							break
 						}
