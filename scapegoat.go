@@ -9,9 +9,10 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
+
+	"github.com/thomersch/scapegoat/tags"
 
 	"github.com/thomersch/grandine/lib/geojson"
 	"github.com/thomersch/grandine/lib/mvt"
@@ -28,16 +29,6 @@ var (
 	zoom      = 7
 	josmURL   = "https://josm.openstreetmap.de/maps?format=geojson"
 	tilesPath = "tiles/"
-	webmercator := map[string]bool {
-		"EPSG:3857": true,
-		"EPSG:3587": true,
-		"EPSG:3785": true,
-		"EPSG:41001": true,
-		"EPSG:54004": true,
-		"EPSG:102113": true,
-		"EPSG:102100": true,
-		"EPSG:900913": true
-	}
 )
 
 func main() {
@@ -214,24 +205,7 @@ func startEncoders(c <-chan featuresInTile, basepath string) <-chan bool {
 		go func() {
 			// MVT does not support nested objects, so we need to post-process here
 			for i := range mvtQueue {
-				var filteredFts = make([]spatial.Feature, 0, len(i.Features))
-
-				for fn := range i.Features {
-					projs, ok := i.Features[fn].Props["available_projections"]
-					if !ok {
-						filteredFts = append(filteredFts, i.Features[fn])
-						continue
-					}
-					for _, proj := range projs.([]interface{}) {
-						if webmercator[proj.(string)] {
-							delete(i.Features[fn].Props, "available_projections")
-							i.Features[fn].Props["url"] = strings.ReplaceAll(i.Features[fn].Props["url"].(string), "{proj}", proj.(string))
-							filteredFts = append(filteredFts, i.Features[fn])
-							break
-						}
-					}
-				}
-				innerMvtQueue <- featuresInTile{Features: filteredFts, Tile: i.Tile}
+				innerMvtQueue <- featuresInTile{Features: tags.FilterFeaturesForID(i.Features), Tile: i.Tile}
 			}
 			close(innerMvtQueue)
 		}()
