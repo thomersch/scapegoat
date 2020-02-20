@@ -7,6 +7,6 @@ jobs:
     working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     steps:
       - checkout
-      - run: apt-get install -y libgeos
+      - run: sudo apt-get install -y libgeos-dev
       - run: make build
       - run: go test -v ./...
