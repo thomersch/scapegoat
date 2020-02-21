@@ -6,6 +6,7 @@ github.com/containerd/continuity v0.0.0-20181203112020-004b46473808/go.mod h1:GL
 github.com/ctessum/polyclip-go v1.0.1 h1:y+qTvBa6KLRTq/mZKOHciTaHv939nU5zl9mThLbK/m8=
 github.com/ctessum/polyclip-go v1.0.1/go.mod h1:e/Lh1JOGyynZwLr0M4tZGIyx07wXw9T+pu6hFut+kFQ=
 github.com/d4l3k/messagediff v1.2.1/go.mod h1:Oozbb1TVXFac9FtSIxHBMnBCq2qeH/2KkEQxENCrlLo=
+github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -45,8 +46,8 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0 h1:2E4SXV/wtOkTonXsotYi4li6zVWxYlZuYNCXe9XRJyk=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
-github.com/thomersch/grandine v0.0.0-20200218154727-e57f2b2111b7 h1:5WnkR+QIUAwwYgtlLTc+KBPgrsQILy/59L3wSvMDmN0=
-github.com/thomersch/grandine v0.0.0-20200218154727-e57f2b2111b7/go.mod h1:tIx3MSRLsQ3MWD0w3s+BrPLP8qUm08c+hVkYA24SlUI=
+github.com/thomersch/grandine v0.0.0-20200221144804-912985f0e2e7 h1:db3rxvZJFG2veTgBF/O9t4fHu/RZxrkRGPnT+deSego=
+github.com/thomersch/grandine v0.0.0-20200221144804-912985f0e2e7/go.mod h1:tIx3MSRLsQ3MWD0w3s+BrPLP8qUm08c+hVkYA24SlUI=
 github.com/twpayne/go-geom v1.0.5 h1:XZBfc3Wx0dj4p17ZfmzqxnU9fTTa3pY4YG5RngKsVNI=
 github.com/twpayne/go-geom v1.0.5/go.mod h1:gO3i8BeAvZuihwwXcw8dIOWXebCzTmy3uvXj9dZG2RA=
 github.com/twpayne/go-kml v1.0.0/go.mod h1:LlvLIQSfMqYk2O7Nx8vYAbSLv4K9rjMvLlEdUKWdjq0=

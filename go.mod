@@ -12,6 +12,6 @@ require (
 	github.com/paulsmith/gogeos v0.1.2 // indirect
 	github.com/pmezard/gogeos v0.1.2 // indirect
 	github.com/stretchr/testify v1.4.0
-	github.com/thomersch/grandine v0.0.0-20200218154727-e57f2b2111b7
+	github.com/thomersch/grandine v0.0.0-20200221144804-912985f0e2e7
 	github.com/twpayne/go-geom v1.0.5 // indirect
 )
