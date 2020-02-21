@@ -32,15 +32,24 @@ func FilterFeaturesForID(fts []spatial.Feature) []spatial.Feature {
 			ftWritten      bool
 		)
 
-		projs, ok := ft.Props["available_projections"]
+		// feature copy
+		var newFt = spatial.Feature{
+			Geometry: ft.Geometry,
+			Props:    make(map[string]interface{}),
+		}
+		for k, v := range ft.Props {
+			newFt.Props[k] = v
+		}
+
+		projs, ok := newFt.Props["available_projections"]
 		if !ok {
-			out = append(out, ft)
+			out = append(out, newFt)
 			continue
 		}
 		for _, proj := range projs.([]interface{}) {
 			if webmercator[proj.(string)] {
-				setProjTags(ft.Props, proj.(string))
-				out = append(out, ft)
+				setProjTags(newFt.Props, proj.(string))
+				out = append(out, newFt)
 				ftWritten = true
 				break
 			}
@@ -50,8 +59,8 @@ func FilterFeaturesForID(fts []spatial.Feature) []spatial.Feature {
 		}
 
 		if hasWGSFallback && !ftWritten {
-			setProjTags(ft.Props, wgs84)
-			out = append(out, ft)
+			setProjTags(newFt.Props, wgs84)
+			out = append(out, newFt)
 		}
 	}
 	return out

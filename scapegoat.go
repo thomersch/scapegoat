@@ -176,13 +176,15 @@ func generate(src io.Reader, outPath string) error {
 	}()
 	<-encoderDone
 	ticker.Stop()
+	log.Println("Finished encoding")
 	return nil
 }
 
 func startEncoders(c <-chan featuresInTile, basepath string) <-chan bool {
 	var (
-		gjQueue  = make(chan featuresInTile, 100)
-		mvtQueue = make(chan featuresInTile, 100)
+		gjQueue    = make(chan featuresInTile, 100)
+		gjWebQueue = make(chan featuresInTile, 100)
+		mvtQueue   = make(chan featuresInTile, 100)
 
 		wg   sync.WaitGroup
 		done = make(chan bool)
@@ -213,13 +215,32 @@ func startEncoders(c <-chan featuresInTile, basepath string) <-chan bool {
 		wg.Done()
 	}()
 
+	wg.Add(1)
+	go func() {
+		var (
+			gfc        = &tile.GeoJSONCodec{}
+			innerQueue = make(chan featuresInTile, 100)
+		)
+
+		go func() {
+			for i := range gjWebQueue {
+				innerQueue <- featuresInTile{Features: tags.FilterFeaturesForID(i.Features), Tile: i.Tile}
+			}
+			close(innerQueue)
+		}()
+		worker(innerQueue, gfc, basepath, ".web.geojson")
+		wg.Done()
+	}()
+
 	go func() {
 		for ft := range c {
 			gjQueue <- ft
 			mvtQueue <- ft
+			gjWebQueue <- ft
 		}
 		close(gjQueue)
 		close(mvtQueue)
+		close(gjWebQueue)
 		wg.Wait()
 		done <- true
 	}()
