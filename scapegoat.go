@@ -116,11 +116,12 @@ func generate(src io.Reader, outPath string) error {
 	}
 
 	for i, ft := range fcoll.Features {
+		// If we have no geometry, cover the whole planet.
 		if ft.Geometry.Typ() == spatial.GeomTypeEmpty {
 			fcoll.Features[i].Geometry = spatial.MustNewGeom(spatial.Polygon{{
-				{-180, -90},
-				{-180, 90},
 				{180, 90},
+				{-180, 90},
+				{-180, -90},
 				{180, -90},
 			}})
 		}
