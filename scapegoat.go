@@ -28,7 +28,10 @@ type featuresInTile struct {
 var (
 	zoom      = 7
 	josmURL   = "https://josm.openstreetmap.de/maps?format=geojson"
-	tilesPath = "tiles/"
+	tilesPath = "tiles"
+
+	iconPath    = "icons"
+	iconBaseURL = "https://imagery.openstreetmap.lu/icons/"
 )
 
 func main() {
@@ -44,6 +47,7 @@ func loop() {
 		log.Println("Nothing to be done.")
 		return
 	}
+	log.Printf("Download completed, got %v bytes.", len(buf))
 	r := bytes.NewBuffer(buf)
 	err := generate(r, tilesPath)
 	if err != nil {
@@ -104,6 +108,12 @@ func generate(src io.Reader, outPath string) error {
 		return err
 	}
 
+	// icon target
+	err = os.MkdirAll(iconPath, 0777)
+	if err != nil {
+		return err
+	}
+
 	// decode GeoJSON
 	var (
 		fcoll = spatial.FeatureCollection{}
@@ -115,6 +125,7 @@ func generate(src io.Reader, outPath string) error {
 		return err
 	}
 
+	// Preprocessing Stage
 	for i, ft := range fcoll.Features {
 		// If we have no geometry, cover the whole planet.
 		if ft.Geometry.Typ() == spatial.GeomTypeEmpty {
@@ -126,7 +137,7 @@ func generate(src io.Reader, outPath string) error {
 			}})
 		}
 
-		attr, ok := ft.Properties()["attribution"].(map[string]interface{})
+		attr, ok := ft.Props["attribution"].(map[string]interface{})
 		if !ok {
 			continue
 		}
@@ -134,11 +145,23 @@ func generate(src io.Reader, outPath string) error {
 		ft.Props["attribution-url"] = attr["url"]
 		delete(ft.Props, "attribution")
 
+		if icon, ok := ft.Props["icon"]; ok {
+			icondata := tags.DecodeIconData(icon.(string))
+			if len(icondata.Buf) != 0 {
+				url, err := icondata.WriteToDisk(iconPath, ft.Props["id"].(string), iconBaseURL)
+				if err != nil {
+					log.Printf("could not write icon %s to disk", ft.Props["id"])
+				}
+				ft.Props["icon"] = url
+			}
+		}
+
 		for _, tid := range tile.Coverage(fcoll.Features[i].Geometry.BBox(), zoom) {
 			ftab[zoom][tid.X][tid.Y] = append(ftab[zoom][tid.X][tid.Y], fcoll.Features[i])
 		}
 	}
 
+	// Postprocessing Stage
 	var (
 		ftChan      = make(chan featuresInTile, 10000)
 		encoderDone = startEncoders(ftChan, outPath)
